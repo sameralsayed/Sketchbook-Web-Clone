@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Sketchbook Web – Professional digital drawing app. Sketch, paint, draw with natural brushes, infinite canvas, layers, color picker and more. Fully functional, sleek, mobile-friendly drawing experience.">
+    <meta name="keywords" content="sketchbook web, digital drawing app, online sketchbook, canvas drawing, art app, brush engine, layers, infinite canvas, responsive drawing tool, html5 canvas, bootstrap, jquery">
+    <meta name="author" content="SAMER SAEID">
+    <meta name="robots" content="index, follow">
+    <title>Sketchbook • Digital Sketching &amp; Drawing</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-dark text-light overflow-hidden">
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-dark bg-black border-bottom border-success fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="#" onclick="return false;">
+                <i class="bi bi-pencil-fill me-2 text-success"></i> Sketchbook
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- File actions -->
+                <div class="btn-group">
+                    <button onclick="newCanvas()" class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-plus"></i></button>
+                    <button onclick="undo()" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-counterclockwise"></i></button>
+                    <button onclick="redo()" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+                
+                <!-- Brush size -->
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-brush me-2"></i>
+                    <input type="range" id="brushSize" min="2" max="80" value="12" class="form-range w-100" style="width:120px" oninput="updateBrushPreview()">
+                    <span id="sizeValue" class="ms-2 fw-bold text-success">12</span>
+                </div>
+                
+                <!-- Color picker -->
+                <input type="color" id="colorPicker" value="#00ff9d" class="form-control form-control-color border-0 bg-transparent" title="Pick color" onchange="setColor(this.value)">
+                
+                <!-- Mobile menu toggle -->
+                <button class="navbar-toggler d-lg-none border-0" type="button" onclick="toggleMobileTools()">
+                    <i class="bi bi-tools fs-3"></i>
+                </button>
+                
+                <!-- Profile -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center" data-bs-toggle="dropdown">
+                        <img src="https://i.pravatar.cc/32?u=samer" alt="SAMER SAEID" class="rounded-circle border border-success" width="32" height="32">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end bg-black border-success text-light">
+                        <li><a class="dropdown-item" href="#" onclick="return false;">👤 My Gallery</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="return false;">📤 Export PNG</a></li>
+                        <li><hr class="dropdown-divider border-success"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="fakeLogout(event)">🚪 Log Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid pt-5 mt-5 h-100 d-flex">
+        <!-- LEFT TOOLBAR (Desktop) -->
+        <div class="d-none d-lg-flex flex-column bg-black border-end border-success p-2 gap-3" style="width:68px">
+            <button onclick="setTool(0)" class="tool-btn active btn btn-dark border-0 p-3 rounded-3" title="Brush"><i class="bi bi-brush-fill fs-3"></i></button>
+            <button onclick="setTool(1)" class="tool-btn btn btn-dark border-0 p-3 rounded-3" title="Eraser"><i class="bi bi-eraser-fill fs-3"></i></button>
+            <button onclick="setTool(2)" class="tool-btn btn btn-dark border-0 p-3 rounded-3" title="Smudge"><i class="bi bi-water fs-3"></i></button>
+            <button onclick="setTool(3)" class="tool-btn btn btn-dark border-0 p-3 rounded-3" title="Marker"><i class="bi bi-pen-fill fs-3"></i></button>
+            <button onclick="setTool(4)" class="tool-btn btn btn-dark border-0 p-3 rounded-3" title="Airbrush"><i class="bi bi-cloud-fog2-fill fs-3"></i></button>
+            
+            <div class="mt-auto pt-3 border-top border-success">
+                <button onclick="toggleLayersPanel()" class="btn btn-dark border-0 p-3 rounded-3 w-100 mb-2" title="Layers"><i class="bi bi-layers-fill fs-3"></i></button>
+                <button onclick="clearCanvas()" class="btn btn-dark border-0 p-3 rounded-3 w-100" title="Clear canvas"><i class="bi bi-trash3-fill fs-3"></i></button>
+            </div>
+            
+            <!-- Guides -->
+            <div class="mt-2 text-center small text-success">Guides</div>
+            <button onclick="toggleGuide()" class="btn btn-outline-success btn-sm"><i class="bi bi-rulers"></i></button>
+        </div>
+
+        <!-- MAIN CANVAS AREA -->
+        <div class="flex-grow-1 position-relative d-flex align-items-center justify-content-center bg-[#0f0f0f]" id="canvasContainer">
+            <canvas id="sketchCanvas" class="shadow-lg rounded-4 border border-success" style="touch-action:none; max-width:100%; max-height:calc(100vh - 80px); background:#1a1a1a;"></canvas>
+            
+            <!-- Canvas overlay instructions for first time -->
+            <div id="welcomeOverlay" class="position-absolute top-50 start-50 translate-middle text-center text-success d-none">
+                <h2 class="display-6 fw-light">Start sketching ✨</h2>
+                <p class="lead">Draw naturally with your finger or mouse</p>
+                <button onclick="hideWelcome()" class="btn btn-success px-5 py-2">Begin Drawing</button>
+            </div>
+        </div>
+
+        <!-- RIGHT LAYERS PANEL -->
+        <div id="layersPanel" class="d-none d-xl-flex flex-column bg-black border-start border-success p-3" style="width:240px">
+            <h6 class="fw-bold text-success mb-3"><i class="bi bi-layers"></i> Layers</h6>
+            <div id="layersList" class="flex-grow-1 overflow-auto"></div>
+            
+            <div class="d-flex gap-2 mt-3">
+                <button onclick="addLayer()" class="btn btn-success flex-fill btn-sm"><i class="bi bi-plus-circle"></i> Add</button>
+                <button onclick="deleteLayer()" class="btn btn-outline-light flex-fill btn-sm">Delete</button>
+            </div>
+            
+            <!-- Color swatches -->
+            <div class="mt-auto pt-4">
+                <h6 class="text-success small mb-2">Quick Colors</h6>
+                <div class="d-flex flex-wrap gap-2" id="swatches">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE BOTTOM TOOLS -->
+    <div id="mobileTools" class="d-lg-none position-fixed bottom-0 start-0 end-0 bg-black border-top border-success py-2 px-3 d-flex justify-content-around align-items-center">
+        <button onclick="setTool(0)" class="tool-btn active btn btn-dark border-0 flex-column"><i class="bi bi-brush-fill"></i><small>Brush</small></button>
+        <button onclick="setTool(1)" class="tool-btn btn btn-dark border-0 flex-column"><i class="bi bi-eraser-fill"></i><small>Eraser</small></button>
+        <button onclick="setTool(3)" class="tool-btn btn btn-dark border-0 flex-column"><i class="bi bi-pen-fill"></i><small>Marker</small></button>
+        <button onclick="toggleLayersPanel()" class="btn btn-dark border-0 flex-column"><i class="bi bi-layers"></i><small>Layers</small></button>
+        <button onclick="clearCanvas()" class="btn btn-dark border-0 flex-column"><i class="bi bi-trash3"></i><small>Clear</small></button>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-black border-top border-success py-3 position-fixed bottom-0 start-0 end-0 d-none d-lg-flex align-items-center justify-content-center small text-muted">
+        <div class="container d-flex justify-content-between align-items-center">
+            <p class="mb-0">© Copyright SAMER SAEID. All rights reserved.</p>
+            <p class="mb-0">Made by ♥️ <a href="https://bio.link/samer" target="_blank" class="text-success text-decoration-none fw-semibold">SAMER SAEID</a></p>
+            <small class="text-muted">Infinite canvas • Natural brushes • Layers • 100% responsive • SEO optimized</small>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+</html>
